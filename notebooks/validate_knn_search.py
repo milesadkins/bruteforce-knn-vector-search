@@ -174,16 +174,15 @@ df = spark.sql(
       __query_row_id
     FROM query_table
     JOIN base_table
+  ),
+  ranked AS (
+    SELECT *,
+      ROW_NUMBER() OVER (PARTITION BY __query_row_id ORDER BY search_score DESC) AS __rank
+    FROM with_score
   )
-  SELECT inline(
-    max_by(
-      struct(* EXCEPT (__query_row_id)),
-      search_score,
-      {num_results}
-    )
-  )
-  FROM with_score
-  GROUP BY __query_row_id
+  SELECT {query_ref}, {base_ref}, search_score
+  FROM ranked
+  WHERE __rank <= {num_results}
   """
 )
 

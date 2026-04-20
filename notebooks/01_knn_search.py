@@ -103,16 +103,15 @@ df = spark.sql(
             __query_row_id
         FROM query_table
         JOIN base_table
+    ),
+    ranked AS (
+        SELECT *,
+            ROW_NUMBER() OVER (PARTITION BY __query_row_id ORDER BY search_score DESC) AS __rank
+        FROM with_score
     )
-    SELECT inline(
-        max_by(
-            struct(* EXCEPT (__query_row_id)),
-            search_score,
-            {num_results}
-        )
-    )
-    FROM with_score
-    GROUP BY __query_row_id
+    SELECT {query_ref}, {base_ref}, search_score
+    FROM ranked
+    WHERE __rank <= {num_results}
     """
 )
 
@@ -153,8 +152,12 @@ display(df.limit(20))
 #                {similarity_distance_function}(query_embedding, base_embedding) AS score, __rid
 #         FROM q JOIN b
 #     )
-#     SELECT inline(max_by(struct(* EXCEPT (__rid)), score, {num_results}))
-#     FROM scored GROUP BY __rid
+#     ),
+#     ranked AS (
+#         SELECT *, ROW_NUMBER() OVER (PARTITION BY __rid ORDER BY score DESC) AS __rank
+#         FROM scored
+#     )
+#     SELECT query_txn, base_ticker, score FROM ranked WHERE __rank <= {num_results}
 # """)
 # print(f"1K × 10K: {df_1k.count():,} rows in {time.time() - start:.1f}s")
 
@@ -177,8 +180,12 @@ display(df.limit(20))
 #                {similarity_distance_function}(query_embedding, base_embedding) AS score, __rid
 #         FROM q JOIN b
 #     )
-#     SELECT inline(max_by(struct(* EXCEPT (__rid)), score, {num_results}))
-#     FROM scored GROUP BY __rid
+#     ),
+#     ranked AS (
+#         SELECT *, ROW_NUMBER() OVER (PARTITION BY __rid ORDER BY score DESC) AS __rank
+#         FROM scored
+#     )
+#     SELECT query_txn, base_ticker, score FROM ranked WHERE __rank <= {num_results}
 # """)
 # print(f"10K × 10K: {df_10k.count():,} rows in {time.time() - start:.1f}s")
 
@@ -201,8 +208,12 @@ display(df.limit(20))
 #                {similarity_distance_function}(query_embedding, base_embedding) AS score, __rid
 #         FROM q JOIN b
 #     )
-#     SELECT inline(max_by(struct(* EXCEPT (__rid)), score, {num_results}))
-#     FROM scored GROUP BY __rid
+#     ),
+#     ranked AS (
+#         SELECT *, ROW_NUMBER() OVER (PARTITION BY __rid ORDER BY score DESC) AS __rank
+#         FROM scored
+#     )
+#     SELECT query_txn, base_ticker, score FROM ranked WHERE __rank <= {num_results}
 # """)
 # print(f"100K × 10K: {df_100k.count():,} rows in {time.time() - start:.1f}s")
 
@@ -225,7 +236,11 @@ display(df.limit(20))
 #                {similarity_distance_function}(query_embedding, base_embedding) AS score, __rid
 #         FROM q JOIN b
 #     )
-#     SELECT inline(max_by(struct(* EXCEPT (__rid)), score, {num_results}))
-#     FROM scored GROUP BY __rid
+#     ),
+#     ranked AS (
+#         SELECT *, ROW_NUMBER() OVER (PARTITION BY __rid ORDER BY score DESC) AS __rank
+#         FROM scored
+#     )
+#     SELECT query_txn, base_ticker, score FROM ranked WHERE __rank <= {num_results}
 # """)
 # print(f"1M × 10K: {df_1m.count():,} rows in {time.time() - start:.1f}s")

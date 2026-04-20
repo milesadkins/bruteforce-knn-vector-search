@@ -18,8 +18,11 @@
 catalog = "madkins2_catalog"
 schema = "tagging"
 
-num_transactions = 40_000_000
-num_tickers = 10_000
+# Start small to validate, then scale up:
+#   num_transactions = 40_000_000
+#   num_tickers = 10_000
+num_transactions = 10_000
+num_tickers = 100
 embedding_dim = 1024
 
 # COMMAND ----------
@@ -65,7 +68,7 @@ print(f"Created {num_tickers:,} tickers in {elapsed:.1f}s")
 
 # COMMAND ----------
 
-spark.sql(f"SELECT count(*) AS ticker_count, size(embedding) AS embedding_dim FROM {catalog}.{schema}.tickers_10k").display()
+spark.sql(f"SELECT count(*) AS ticker_count, size(first(embedding)) AS embedding_dim FROM {catalog}.{schema}.tickers_10k").display()
 
 # COMMAND ----------
 
@@ -187,7 +190,7 @@ print(f"Created {num_transactions:,} transactions in {elapsed:.1f}s")
 
 # COMMAND ----------
 
-spark.sql(f"SELECT count(*) AS total_rows FROM {catalog}.{schema}.transactions_40m").display()
+spark.sql(f"SELECT count(*) AS total_rows, size(first(embedding)) AS embedding_dim FROM {catalog}.{schema}.transactions_40m").display()
 
 # COMMAND ----------
 
